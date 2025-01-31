@@ -1,0 +1,34 @@
+# IDE Workspaces
+.idea/
+.vscode/
+.editorconfig
+
+# Environment Files
+.env
+*.env
+
+# Generated Files
+Godeps/
+vendor/
+build/
+dist/
+bin/
+*~
+*.a
+*.o
+*.so
+*.out
+*.test
+*.exe
+*.dll
+*.swp
+*.tmp
+*.bak
+*.dylib
+DS_Store
+Thumbs.db
+
+# Log Files
+log/
+*.log
+*.log.*
