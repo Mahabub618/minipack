@@ -41,6 +41,16 @@ type SignupResponse struct {
 	Role           string `json:"role"`
 }
 
+type LoginRequest struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8"`
+}
+
+type LoginResponse struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
 var validate = validator.New()
 
 func SignupHandler(w http.ResponseWriter, r *http.Request) {
@@ -127,6 +137,68 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	var req LoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Validate request
+	if err := validate.Struct(req); err != nil {
+		http.Error(w, "Validation failed: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Get user from DB
+	var user models.User
+	err := database.DB.Get(&user, "SELECT id, email, password, role FROM users WHERE email = $1", req.Email)
+	if err == sql.ErrNoRows {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	} else if err != nil {
+		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Validate the password
+	if !CheckPasswordHash(req.Password, user.Password) {
+		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+		return
+	}
+
+	// Load config
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		http.Error(w, "Configuration error", http.StatusInternalServerError)
+		return
+	}
+
+	// Generate access token
+	accessToken, err := GenerateAccessToken(user.ID, user.Role, cfg)
+	if err != nil {
+		http.Error(w, "Failed to generate access token", http.StatusInternalServerError)
+		return
+	}
+
+	// Generate refresh token
+	refreshToken, err := GenerateRefreshToken(user.ID, cfg)
+	if err != nil {
+		http.Error(w, "Failed to generate refresh token", http.StatusInternalServerError)
+		return
+	}
+
+	// Respond with tokens
+	response := LoginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
 func HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	return string(bytes), err
@@ -150,12 +222,12 @@ func GenerateAccessToken(userID int, role string, cfg *config.Config) (string, e
 	return token.SignedString([]byte(cfg.JWTSecret))
 }
 
-func GenerateRefreshToken(userID int, cfg *config.Config) (string, time.Time, error) {
+func GenerateRefreshToken(userID int, cfg *config.Config) (string, error) {
 	expirationTime := time.Now().Add(cfg.RefreshTokenExpiry)
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["user_id"] = userID
 	claims["exp"] = expirationTime.Unix()
 	tokenString, err := token.SignedString([]byte(cfg.JWTSecret))
-	return tokenString, expirationTime, err
+	return tokenString, err
 }
