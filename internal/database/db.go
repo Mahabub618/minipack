@@ -2,7 +2,6 @@ package database
 
 import (
 	"fmt"
-
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/mahabub618/minipack/config"
@@ -11,7 +10,7 @@ import (
 var DB *sqlx.DB
 
 func InitDB(cfg *config.Config) error {
-	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", cfg.DBHost, cfg.DBPort, cfg.DBPassword, cfg.DBName)
+	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName)
 	var err error
 	DB, err = sqlx.Connect("postgres", connStr)
 	if err != nil {

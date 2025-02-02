@@ -1,9 +1,18 @@
 package handlers
 
 import (
+	"database/sql"
+	"encoding/json"
+	"fmt"
+	"github.com/mahabub618/minipack/internal/database"
+	"github.com/mahabub618/minipack/internal/models"
+	"golang.org/x/crypto/bcrypt"
+	"log"
+	"net/http"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/go-playground/validator/v10"
 	"github.com/mahabub618/minipack/config"
 )
 
@@ -32,6 +41,110 @@ type SignupResponse struct {
 	AddressCity    string `json:"address_city,omitempty"`
 	AddressCountry string `json:"address_country,omitempty"`
 	Role           string `json:"role"`
+}
+
+var validate = validator.New()
+
+func SignupHandler(w http.ResponseWriter, r *http.Request) {
+	var req SignUpRequest
+
+	// Decode body
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Validate request body
+	if err := validate.Struct(req); err != nil {
+		http.Error(w, "Validation failed: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	log.Println("AddressStreet: ", req.AddressStreet)
+	log.Println("AddressCity: ", req.AddressCity)
+	log.Println("AddressCountry: ", req.AddressCountry)
+
+	// Check if email already exists
+	var exists bool
+	err := database.DB.Get(&exists, "SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)", req.Email)
+	if err != nil {
+		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if exists {
+		http.Error(w, "Email already exists", http.StatusConflict)
+		return
+	}
+
+	// Hash password
+	hashedPassword, err := HashPassword(req.Password)
+	if err != nil {
+		http.Error(w, "Failed to hash password: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Create user
+	newUser := models.User{
+		Name:           req.Name,
+		Email:          req.Email,
+		Password:       hashedPassword,
+		Phone:          sql.NullString{String: req.Phone, Valid: req.Phone != ""},
+		AddressStreet:  sql.NullString{String: req.AddressStreet, Valid: req.AddressStreet != ""},
+		AddressCity:    sql.NullString{String: req.AddressCity, Valid: req.AddressCity != ""},
+		AddressCountry: sql.NullString{String: req.AddressCountry, Valid: req.AddressCountry != ""},
+		Role:           "user",
+	}
+
+	fmt.Printf("AddressStreet: %v, Valid: %v\n", newUser.AddressStreet.String, newUser.AddressStreet.Valid)
+	fmt.Printf("AddressCity: %v, Valid: %v\n", newUser.AddressCity.String, newUser.AddressCity.Valid)
+	fmt.Printf("AddressCountry: %v, Valid: %v\n", newUser.AddressCountry.String, newUser.AddressCountry.Valid)
+
+	// Insert user
+
+	query := `
+		INSERT INTO users (name, email, password, phone, address_street, address_city, address_country, role)
+		VALUES(:name, :email, :password, :phone, :address_street, :address_city, :address_country, :role)
+		RETURNING id`
+
+	stmt, err := database.DB.PrepareNamed(query)
+	if err != nil {
+		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer stmt.Close()
+
+	err = stmt.Get(&newUser.ID, newUser)
+	if err != nil {
+		http.Error(w, "Failed to create user: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Prepare response
+	response := SignupResponse{
+		ID:             newUser.ID,
+		Name:           newUser.Name,
+		Email:          newUser.Email,
+		Role:           newUser.Role,
+		Phone:          newUser.Phone.String,
+		AddressStreet:  newUser.AddressStreet.String,
+		AddressCity:    newUser.AddressCity.String,
+		AddressCountry: newUser.AddressCountry.String,
+	}
+
+	// Respond with created user
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(response)
+}
+
+func HashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	return string(bytes), err
+}
+
+func CheckPasswordHash(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
 }
 
 func GenerateAccessToken(userID int, role string, cfg *config.Config) (string, error) {

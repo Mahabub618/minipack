@@ -9,14 +9,14 @@ import (
 )
 
 type Config struct {
-	DBHost             string        `envconfig: "DB_HOST"`
-	DBPort             string        `envconfig: "DB_PORT"`
-	DBUser             string        `envconfig: "DB_USER"`
-	DBPassword         string        `envconfig: "DB_PASSWORD"`
-	DBName             string        `envconfig: "DB_NAME"`
-	JWTSecret          string        `envconfig: "JWT_SECRET"`
-	AccessTokenExpiry  time.Duration `envconfig: "ACCESS_TOKEN_EXPIRY"`
-	RefreshTokenExpiry time.Duration `envconfig: "REFRESH_TOKEN_EXPIRY"`
+	DBHost             string        `envconfig:"DB_HOST"`
+	DBPort             string        `envconfig:"DB_PORT"`
+	DBUser             string        `envconfig:"DB_USER"`
+	DBPassword         string        `envconfig:"DB_PASSWORD"`
+	DBName             string        `envconfig:"DB_NAME"`
+	JWTSecret          string        `envconfig:"JWT_SECRET"`
+	AccessTokenExpiry  time.Duration `envconfig:"ACCESS_TOKEN_EXPIRY"`
+	RefreshTokenExpiry time.Duration `envconfig:"REFRESH_TOKEN_EXPIRY"`
 }
 
 var (
