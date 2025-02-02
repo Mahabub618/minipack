@@ -3,11 +3,9 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"github.com/mahabub618/minipack/internal/database"
 	"github.com/mahabub618/minipack/internal/models"
 	"golang.org/x/crypto/bcrypt"
-	"log"
 	"net/http"
 	"time"
 
@@ -60,10 +58,6 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("AddressStreet: ", req.AddressStreet)
-	log.Println("AddressCity: ", req.AddressCity)
-	log.Println("AddressCountry: ", req.AddressCountry)
-
 	// Check if email already exists
 	var exists bool
 	err := database.DB.Get(&exists, "SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)", req.Email)
@@ -94,10 +88,6 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		AddressCountry: sql.NullString{String: req.AddressCountry, Valid: req.AddressCountry != ""},
 		Role:           "user",
 	}
-
-	fmt.Printf("AddressStreet: %v, Valid: %v\n", newUser.AddressStreet.String, newUser.AddressStreet.Valid)
-	fmt.Printf("AddressCity: %v, Valid: %v\n", newUser.AddressCity.String, newUser.AddressCity.Valid)
-	fmt.Printf("AddressCountry: %v, Valid: %v\n", newUser.AddressCountry.String, newUser.AddressCountry.Valid)
 
 	// Insert user
 
