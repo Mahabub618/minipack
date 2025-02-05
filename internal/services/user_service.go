@@ -25,6 +25,7 @@ func NewUserService(userRepo *repositories.UserRepository) *UserService {
 }
 
 var ErrEmailExists = errors.New("email already exists")
+var ErrInvalidCredentials = errors.New("invalid email or password")
 
 // RegisterUser handles user registration
 func (s *UserService) RegisterUser(ctx context.Context, user *models.User) error {
@@ -49,16 +50,16 @@ func (s *UserService) RegisterUser(ctx context.Context, user *models.User) error
 	return s.userRepo.CreateUser(ctx, user)
 }
 
-func (s *UserService) LoginUser(ctx context.Context, user *models.User) (string, string, error) {
+func (s *UserService) LoginUser(ctx context.Context, email, password string) (string, string, error) {
 	// Retrieve user by email
-	dbUser, err := s.userRepo.FindUserByEmail(ctx, user.Email)
+	dbUser, err := s.userRepo.FindUserByEmail(ctx, email)
 	if err != nil {
 		return "", "", errors.New("invalid email or password")
 	}
 
 	// Compare the provided password with the stored hash
-	if !CheckPasswordHash(user.Password, dbUser.Password) {
-		return "", "", errors.New("invalid email password")
+	if !CheckPasswordHash(password, dbUser.Password) {
+		return "", "", ErrInvalidCredentials
 	}
 
 	// Load config

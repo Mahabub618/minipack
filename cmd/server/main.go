@@ -40,7 +40,7 @@ func main() {
 
 	router.Get("/ping", handlers.PingHandler)
 	router.Post("/auth/signup", userHandler.RegisterHandler)
-	//router.Post("/auth/login", userHandler.)
+	router.Post("/auth/login", userHandler.LoginHandler)
 
 	log.Println("Starting server on: 8585..")
 	if err := http.ListenAndServe(":8585", router); err != nil {
