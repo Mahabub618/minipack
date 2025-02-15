@@ -3,7 +3,7 @@ package models
 import "time"
 
 type Package struct {
-	ID                int       `json:"id"`
+	ID                int       `json:"id,omitempty"`
 	PlatformID        int       `json:"platform_id" validate:"required"`
 	Name              string    `json:"name" validate:"required"`
 	Type              string    `json:"type" validate:"required,oneof=weekly monthly yearly"`

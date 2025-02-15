@@ -34,12 +34,15 @@ func main() {
 	db := database.GetDB()
 	userRepo := repositories.NewUserRepository(db)
 	platformRepo := repositories.NewPlatformRepository(db)
+	packageRepo := repositories.NewPackageRepository(db)
 
 	userService := services.NewUserService(userRepo)
 	platformService := services.NewPlatformService(platformRepo)
+	packageService := services.NewPackageService(packageRepo)
 
 	userHandler := handlers.NewUserHandler(userService)
 	platformHandler := handlers.NewPlatformHandler(platformService)
+	packageHandler := handlers.NewPackageHandler(packageService)
 
 	router := chi.NewRouter()
 
@@ -59,6 +62,12 @@ func main() {
 		r.Get("/platforms", platformHandler.ListPlatforms)
 		r.Post("/platforms/{id}/activate", platformHandler.ActivatePlatform)
 		r.Post("/platforms/{id}/deactivate", platformHandler.DeactivatePlatform)
+
+		r.Post("/packages", packageHandler.CreatePackage)
+		r.Get("/packages/{id}", packageHandler.GetPackageByID)
+		r.Put("/packages/{id}", packageHandler.UpdatePackage)
+		r.Delete("/packages/{id}", packageHandler.DeletePackage)
+		r.Get("/packages/list/{id}", packageHandler.ListPackagesByPlatform)
 	})
 
 	log.Println("Starting server on: 8585..")
