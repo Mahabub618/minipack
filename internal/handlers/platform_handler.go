@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/mahabub618/minipack/internal/models"
@@ -54,10 +55,14 @@ func (h *PlatformHandler) GetPlatformByID(w http.ResponseWriter, r *http.Request
 		http.Error(w, "Invalid platform ID", http.StatusBadRequest)
 		return
 	}
-	// Get platform by ID
+	// Get platform by ID and check if it exists
 	platform, err := h.platformService.GetPlatformByID(r.Context(), id)
 	if err != nil {
 		http.Error(w, "Failed to get platform: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if platform == nil {
+		http.Error(w, "Platform not found", http.StatusNotFound)
 		return
 	}
 	// Respond with the platform
