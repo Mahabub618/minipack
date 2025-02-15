@@ -4,6 +4,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/mahabub618/minipack/internal/middlewares"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
@@ -48,13 +50,16 @@ func main() {
 	router.Post("/auth/signup", userHandler.RegisterHandler)
 	router.Post("/auth/login", userHandler.LoginHandler)
 
-	router.Post("/platforms", platformHandler.CreatePlatform)
-	router.Get("/platforms/{id}", platformHandler.GetPlatformByID)
-	router.Put("/platforms/{id}", platformHandler.UpdatePlatform)
-	router.Delete("/platforms/{id}", platformHandler.DeletePlatform)
-	router.Get("/platforms", platformHandler.ListPlatforms)
-	router.Post("/platforms/{id}/activate", platformHandler.ActivatePlatform)
-	router.Post("/platforms/{id}/deactivate", platformHandler.DeactivatePlatform)
+	router.Group(func(r chi.Router) {
+		r.Use(middlewares.AuthMiddleware("admin"))
+		r.Post("/platforms", platformHandler.CreatePlatform)
+		r.Get("/platforms/{id}", platformHandler.GetPlatformByID)
+		r.Put("/platforms/{id}", platformHandler.UpdatePlatform)
+		r.Delete("/platforms/{id}", platformHandler.DeletePlatform)
+		r.Get("/platforms", platformHandler.ListPlatforms)
+		r.Post("/platforms/{id}/activate", platformHandler.ActivatePlatform)
+		r.Post("/platforms/{id}/deactivate", platformHandler.DeactivatePlatform)
+	})
 
 	log.Println("Starting server on: 8585..")
 	if err := http.ListenAndServe(":8585", router); err != nil {
