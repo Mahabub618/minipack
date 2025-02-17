@@ -38,7 +38,7 @@ func main() {
 
 	userService := services.NewUserService(userRepo)
 	platformService := services.NewPlatformService(platformRepo)
-	packageService := services.NewPackageService(packageRepo)
+	packageService := services.NewPackageService(packageRepo, platformRepo)
 
 	userHandler := handlers.NewUserHandler(userService)
 	platformHandler := handlers.NewPlatformHandler(platformService)

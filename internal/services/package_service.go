@@ -13,10 +13,14 @@ var ErrPackageNotFound = errors.New("package not found")
 
 type PackageService struct {
 	packageRepo *repositories.PackageRepository
+	platformRepo *repositories.PlatformRepository
 }
 
-func NewPackageService(packageRepo *repositories.PackageRepository) *PackageService {
-	return &PackageService{packageRepo: packageRepo}
+func NewPackageService(packageRepo *repositories.PackageRepository, platformRepo *repositories.PlatformRepository) *PackageService {
+	return &PackageService{
+		packageRepo: packageRepo,
+		platformRepo: platformRepo,
+	}
 }
 
 // CreatePackage creates a new package
@@ -27,6 +31,15 @@ func (s *PackageService) CreatePackage(ctx context.Context, pkg *models.Package)
 	}
 	if exist {
 		return ErrPackageExists
+	}
+
+	// Check if the platform exists
+	platformExists, err := s.platformRepo.PlatformExists(ctx, pkg.PlatformID)
+	if err != nil {
+		return errors.New("database error")
+	}
+	if !platformExists {
+		return errors.New("platform does not exist")
 	}
 
 	pkg.CreatedAt = time.Now()
