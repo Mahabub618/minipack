@@ -126,7 +126,7 @@ func (h *PackageHandler) DeletePackage(w http.ResponseWriter, r *http.Request) {
 
 // ListPackagesByPlatform retrieves all packages for a specific platform.
 func (h *PackageHandler) ListPackagesByPlatform(w http.ResponseWriter, r *http.Request) {
-	platformIDStr := chi.URLParam(r, "platform_id")
+	platformIDStr := chi.URLParam(r, "id")
 	platformID, err := strconv.Atoi(platformIDStr)
 	if err != nil {
 		http.Error(w, "Invalid platform ID", http.StatusBadRequest)
