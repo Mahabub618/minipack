@@ -79,24 +79,49 @@ func (h *PlatformHandler) UpdatePlatform(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "Invalid platform ID", http.StatusBadRequest)
 		return
 	}
-	var platform models.Platform
+
 	// Decode request body into platform
+	var platform map[string]interface{}
 	if err := json.NewDecoder(r.Body).Decode(&platform); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-	// Validate request body
+
+	// Get existing platform
+	existingPlatform, err := h.platformService.GetPlatformByID(r.Context(), id)
+	if err != nil {
+		http.Error(w, "Failed to get platform: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if existingPlatform == nil {
+		http.Error(w, "Platform not found", http.StatusNotFound)
+		return
+	}
+
+	// Merge existing platform with request body
+	for key, value := range platform {
+		switch key {
+		case "name":
+			existingPlatform.Name = value.(string)
+		case "description":
+			existingPlatform.Description = value.(string)
+		case "logo_url":
+			existingPlatform.LogoURL = value.(string)
+		case "status":
+			existingPlatform.Status = value.(string)
+		case "supported_countries":
+			existingPlatform.SupportedCountries = value.([]string)
+		}
+	}
+
+	// Validate the updated platform
 	validate := validator.New()
-	if err := validate.Struct(platform); err != nil {
+	if err := validate.Struct(existingPlatform); err != nil {
 		http.Error(w, "Validation failed: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	// Set the platform ID
-
-	platform.ID = id
-
 	// Update platform
-	if err := h.platformService.UpdatePlatform(r.Context(), &platform); err != nil {
+	if err := h.platformService.UpdatePlatform(r.Context(), existingPlatform); err != nil {
 		http.Error(w, "Failed to update platform: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
