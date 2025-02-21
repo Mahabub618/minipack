@@ -35,14 +35,17 @@ func main() {
 	userRepo := repositories.NewUserRepository(db)
 	platformRepo := repositories.NewPlatformRepository(db)
 	packageRepo := repositories.NewPackageRepository(db)
+	subscriptionRepo := repositories.NewSubscriptionRepository(db)
 
 	userService := services.NewUserService(userRepo)
 	platformService := services.NewPlatformService(platformRepo)
 	packageService := services.NewPackageService(packageRepo, platformRepo)
+	subscriptionService := services.NewSubscriptionService(subscriptionRepo)
 
 	userHandler := handlers.NewUserHandler(userService)
 	platformHandler := handlers.NewPlatformHandler(platformService)
 	packageHandler := handlers.NewPackageHandler(packageService)
+	subscriptionHandler := handlers.NewSubscriptionHandler(subscriptionService, userService, packageService)
 
 	router := chi.NewRouter()
 
@@ -52,6 +55,7 @@ func main() {
 	router.Get("/ping", handlers.PingHandler)
 	router.Post("/auth/signup", userHandler.RegisterHandler)
 	router.Post("/auth/login", userHandler.LoginHandler)
+	router.Post("/subscriptions", subscriptionHandler.CreateSubscription)
 
 	router.Group(func(r chi.Router) {
 		r.Use(middlewares.AuthMiddleware("admin"))
