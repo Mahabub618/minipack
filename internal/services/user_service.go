@@ -115,3 +115,9 @@ func GenerateRefreshToken(userID int, cfg *config.Config) (string, error) {
 	tokenString, err := token.SignedString([]byte(cfg.JWTSecret))
 	return tokenString, err
 }
+
+// check if the user exists
+
+func (s *UserService) UserExists(ctx context.Context, id int) (bool, error) {
+	return s.userRepo.UserExists(ctx, id)
+}
