@@ -52,3 +52,13 @@ func (repo *UserRepository) EmailExists(ctx context.Context, email string) (bool
 	err := repo.db.QueryRow(ctx, query, email).Scan(&exists)
 	return exists, err
 }
+
+// UsereExists check if a user already exists in the database
+func (repo *UserRepository) UserExists(ctx context.Context, id int) (bool, error) {
+	query := `
+		SELECT EXISTS(SELECT 1 FROM users WHERE id = $1)
+	`
+	var exists bool
+	err := repo.db.QueryRow(ctx, query, id).Scan(&exists)
+	return exists, err
+}
