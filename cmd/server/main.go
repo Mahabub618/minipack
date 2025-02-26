@@ -36,42 +36,60 @@ func main() {
 	platformRepo := repositories.NewPlatformRepository(db)
 	packageRepo := repositories.NewPackageRepository(db)
 	subscriptionRepo := repositories.NewSubscriptionRepository(db)
+	paymentRepo := repositories.NewPaymentRepository(db)
 
 	userService := services.NewUserService(userRepo)
 	platformService := services.NewPlatformService(platformRepo)
 	packageService := services.NewPackageService(packageRepo, platformRepo)
 	subscriptionService := services.NewSubscriptionService(subscriptionRepo)
+	paymentService := services.NewPaymentService(paymentRepo)
 
 	userHandler := handlers.NewUserHandler(userService)
 	platformHandler := handlers.NewPlatformHandler(platformService)
 	packageHandler := handlers.NewPackageHandler(packageService)
 	subscriptionHandler := handlers.NewSubscriptionHandler(subscriptionService, userService, packageService)
+	paymentHandler := handlers.NewPaymentHandler(paymentService, subscriptionService)
 
 	router := chi.NewRouter()
 
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 
+	// Public Routes
 	router.Get("/ping", handlers.PingHandler)
 	router.Post("/auth/signup", userHandler.RegisterHandler)
 	router.Post("/auth/login", userHandler.LoginHandler)
-	router.Post("/subscriptions", subscriptionHandler.CreateSubscription)
 
+	// User Routes
+	router.Group(func(r chi.Router) {
+		r.Use(middlewares.AuthMiddleware("user"))
+		r.Get("/platforms", platformHandler.ListPlatforms)
+		r.Get("/platforms/{id}", platformHandler.GetPlatformByID)
+
+		r.Get("/packages/{id}", packageHandler.GetPackageByID)
+		r.Get("/packages/list/{id}", packageHandler.ListPackagesByPlatform)
+
+		router.Post("/subscriptions", subscriptionHandler.CreateSubscription)
+
+		r.Post("/payments", paymentHandler.CreatePayment)
+		r.Get("/payments/{id}", paymentHandler.GetPaymentByID)
+		r.Get("/payments/subscription/{subscription_id}", paymentHandler.ListPaymentsBySubscription)
+	})
+
+	// Admin Routes
 	router.Group(func(r chi.Router) {
 		r.Use(middlewares.AuthMiddleware("admin"))
 		r.Post("/platforms", platformHandler.CreatePlatform)
-		r.Get("/platforms/{id}", platformHandler.GetPlatformByID)
 		r.Put("/platforms/{id}", platformHandler.UpdatePlatform)
 		r.Delete("/platforms/{id}", platformHandler.DeletePlatform)
-		r.Get("/platforms", platformHandler.ListPlatforms)
 		r.Post("/platforms/{id}/activate", platformHandler.ActivatePlatform)
 		r.Post("/platforms/{id}/deactivate", platformHandler.DeactivatePlatform)
 
 		r.Post("/packages", packageHandler.CreatePackage)
-		r.Get("/packages/{id}", packageHandler.GetPackageByID)
 		r.Put("/packages/{id}", packageHandler.UpdatePackage)
 		r.Delete("/packages/{id}", packageHandler.DeletePackage)
-		r.Get("/packages/list/{id}", packageHandler.ListPackagesByPlatform)
+
+		r.Post("/payments/{id}/confirm", paymentHandler.ConfirmPayment)
 	})
 
 	log.Println("Starting server on: 8585..")

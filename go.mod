@@ -11,6 +11,7 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/lib/pq v1.10.9
 	github.com/sirupsen/logrus v1.9.3
+	github.com/stripe/stripe-go/v76 v76.25.0
 	golang.org/x/crypto v0.32.0
 )
 
