@@ -17,8 +17,8 @@ func NewSubscriptionRepository(db *pgxpool.Pool) *SubscriptionRepository {
 // CreateSubscription inserts a new subscription into the database.
 func (r *SubscriptionRepository) CreateSubscription(ctx context.Context, sub *models.Subscription) error {
 	query := `
-		INSERT INTO subscriptions (user_id, package_id, price, currency, start_date, end_date, status, auto_renew, trial_end_date, next_billing_date, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		INSERT INTO subscriptions (user_id, package_id, price, currency, status, client_secret, start_date, end_date, auto_renew, trial_end_date, next_billing_date, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 		RETURNING id
 	`
 	return r.db.QueryRow(
@@ -28,9 +28,10 @@ func (r *SubscriptionRepository) CreateSubscription(ctx context.Context, sub *mo
 		sub.PackageID,
 		sub.Price,
 		sub.Currency,
+		sub.Status,
+		sub.ClientSecret,
 		sub.StartDate,
 		sub.EndDate,
-		sub.Status,
 		sub.AutoRenew,
 		sub.TrialEndDate,
 		sub.NextBillingDate,

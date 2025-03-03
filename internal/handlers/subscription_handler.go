@@ -16,14 +16,12 @@ import (
 type SubscriptionHandler struct {
 	subscriptionService *services.SubscriptionService
 	userService         *services.UserService
-	packageService      *services.PackageService
 }
 
-func NewSubscriptionHandler(subscriptionService *services.SubscriptionService, userService *services.UserService, packageService *services.PackageService) *SubscriptionHandler {
+func NewSubscriptionHandler(subscriptionService *services.SubscriptionService, userService *services.UserService) *SubscriptionHandler {
 	return &SubscriptionHandler{
 		subscriptionService: subscriptionService,
 		userService:         userService,
-		packageService:      packageService,
 	}
 }
 
@@ -38,6 +36,12 @@ func (h *SubscriptionHandler) CreateSubscription(w http.ResponseWriter, r *http.
 		return
 	}
 
+	// Validate request
+	if err := validate.Struct(sub); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Validation failed: "+err.Error())
+		return
+	}
+
 	// Check if user exists
 	if exists, err := h.userService.UserExists(r.Context(), sub.UserID); err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to check user")
@@ -47,36 +51,16 @@ func (h *SubscriptionHandler) CreateSubscription(w http.ResponseWriter, r *http.
 		return
 	}
 
-	// Fetch package details
-	pkg, err := h.packageService.GetPackageByID(r.Context(), sub.PackageID)
-	if err != nil || pkg == nil {
-		respondWithError(w, http.StatusBadRequest, "Package does not exist")
-		return
-	}
-
-	// Set subscription details
-	now := time.Now()
-	sub.CreatedAt, sub.UpdatedAt, sub.StartDate = now, now, now
-	sub.EndDate = now.Add(time.Duration(pkg.Duration) * 24 * time.Hour)
-	sub.Price, sub.Currency = pkg.Price-pkg.DiscountAmount, pkg.Currency
-	sub.Status = "active"
-
-	// Validate request
-	if err := validate.Struct(sub); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Validation failed: "+err.Error())
-		return
-	}
-
 	// Create subscription
 	if err := h.subscriptionService.CreateSubscription(r.Context(), &sub); err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Failed to create subscription")
+		respondWithError(w, http.StatusInternalServerError, "Failed to create subscription: "+err.Error())
 		return
 	}
 
-	// Respond with only the "status" field
+	// Respond with only the client_secret
 	response := struct {
-		Status string `json:"status"`
-	}{Status: sub.Status}
+		ClientSecret string `json:"client_secret"`
+	}{ClientSecret: sub.ClientSecret}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)

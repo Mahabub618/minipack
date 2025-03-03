@@ -41,13 +41,13 @@ func main() {
 	userService := services.NewUserService(userRepo)
 	platformService := services.NewPlatformService(platformRepo)
 	packageService := services.NewPackageService(packageRepo, platformRepo)
-	subscriptionService := services.NewSubscriptionService(subscriptionRepo)
+	subscriptionService := services.NewSubscriptionService(subscriptionRepo, packageRepo)
 	paymentService := services.NewPaymentService(paymentRepo)
 
 	userHandler := handlers.NewUserHandler(userService)
 	platformHandler := handlers.NewPlatformHandler(platformService)
 	packageHandler := handlers.NewPackageHandler(packageService)
-	subscriptionHandler := handlers.NewSubscriptionHandler(subscriptionService, userService, packageService)
+	subscriptionHandler := handlers.NewSubscriptionHandler(subscriptionService, userService)
 	paymentHandler := handlers.NewPaymentHandler(paymentService, subscriptionService)
 
 	router := chi.NewRouter()
@@ -69,7 +69,7 @@ func main() {
 		r.Get("/packages/{id}", packageHandler.GetPackageByID)
 		r.Get("/packages/list/{id}", packageHandler.ListPackagesByPlatform)
 
-		router.Post("/subscriptions", subscriptionHandler.CreateSubscription)
+		r.Post("/subscriptions", subscriptionHandler.CreateSubscription)
 
 		r.Post("/payments", paymentHandler.CreatePayment)
 		r.Get("/payments/{id}", paymentHandler.GetPaymentByID)
