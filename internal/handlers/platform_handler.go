@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -140,7 +141,12 @@ func (h *PlatformHandler) DeletePlatform(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	// Delete platform
-	if err := h.platformService.DeletePlatform(r.Context(), id); err != nil {
+	err = h.platformService.DeletePlatform(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, services.ErrPlatformNotFound) {
+			http.Error(w, "Platform not found", http.StatusNotFound)
+			return
+		}
 		http.Error(w, "Failed to delete platform: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
