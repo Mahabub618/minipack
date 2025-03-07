@@ -68,33 +68,27 @@ func (s *PlatformService) DeletePlatform(ctx context.Context, id int) error {
 
 // ActivatePlatform activates a platform
 func (s *PlatformService) ActivatePlatform(ctx context.Context, id int) error {
-	exists, err := s.platformRepo.FindPlatformByID(ctx, id)
+	platform, err := s.platformRepo.FindPlatformByID(ctx, id)
 	if err != nil {
 		return errors.New("database error")
 	}
-	if exists == nil {
+	if platform == nil {
 		return ErrPlatformNotFound
 	}
-	platform := &models.Platform{
-		ID:     id,
-		Status: "active",
-	}
+	platform.Status = "active"
 	return s.platformRepo.UpdatePlatform(ctx, platform)
 }
 
 // DeactivatePlatform deactivates a platform
 func (s *PlatformService) DeactivatePlatform(ctx context.Context, id int) error {
-	exists, err := s.platformRepo.FindPlatformByID(ctx, id)
+	platform, err := s.platformRepo.FindPlatformByID(ctx, id)
 	if err != nil {
 		return errors.New("database error")
 	}
-	if exists == nil {
+	if platform == nil {
 		return ErrPlatformNotFound
 	}
-	platform := &models.Platform{
-		ID:     id,
-		Status: "inactive",
-	}
+	platform.Status = "inactive"
 	return s.platformRepo.UpdatePlatform(ctx, platform)
 }
 
