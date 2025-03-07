@@ -65,7 +65,7 @@ func main() {
 
 	// User Routes
 	router.Group(func(r chi.Router) {
-		r.Use(middlewares.AuthMiddleware("user"))
+		r.Use(middlewares.AuthMiddleware("user", "admin"))
 		r.Get("/platforms", platformHandler.ListPlatforms)
 		r.Get("/platforms/{id}", platformHandler.GetPlatformByID)
 
