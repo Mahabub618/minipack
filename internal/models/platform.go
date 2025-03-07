@@ -7,7 +7,7 @@ type Platform struct {
 	Name               string    `json:"name" validate:"required"`
 	Description        string    `json:"description"`
 	LogoURL            string    `json:"logo_url"`
-	Status             string    `json:"status" validate:"oneof=active inactive"`
+	Status             string    `json:"status"`
 	SupportedCountries []string  `json:"supported_countries"`
 	CreatedAt          time.Time `json:"created_at"`
 	UpdatedAt          time.Time `json:"updated_at"`
