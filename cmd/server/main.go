@@ -35,18 +35,21 @@ func main() {
 	userRepo := repositories.NewUserRepository(db)
 	platformRepo := repositories.NewPlatformRepository(db)
 	packageRepo := repositories.NewPackageRepository(db)
+	validityRepo := repositories.NewValidityRepository(db)
 	subscriptionRepo := repositories.NewSubscriptionRepository(db)
 	paymentRepo := repositories.NewPaymentRepository(db)
 
 	userService := services.NewUserService(userRepo)
 	platformService := services.NewPlatformService(platformRepo)
 	packageService := services.NewPackageService(packageRepo, platformRepo)
-	subscriptionService := services.NewSubscriptionService(subscriptionRepo, packageRepo)
+	validityServices := services.NewValidityService(validityRepo)
+	subscriptionService := services.NewSubscriptionService(subscriptionRepo, validityRepo)
 	paymentService := services.NewPaymentService(paymentRepo)
 
 	userHandler := handlers.NewUserHandler(userService)
 	platformHandler := handlers.NewPlatformHandler(platformService)
-	packageHandler := handlers.NewPackageHandler(packageService)
+	packageHandler := handlers.NewPackageHandler(packageService, platformService, validityServices)
+	validityHander := handlers.NewValidityHandler(validityServices, platformService)
 	subscriptionHandler := handlers.NewSubscriptionHandler(subscriptionService, userService)
 	paymentHandler := handlers.NewPaymentHandler(paymentService, subscriptionService)
 
@@ -66,7 +69,10 @@ func main() {
 		r.Get("/platforms", platformHandler.ListPlatforms)
 		r.Get("/platforms/{id}", platformHandler.GetPlatformByID)
 
-		r.Get("/packages/{id}", packageHandler.GetPackageByID)
+		r.Get("/validity/{id}", validityHander.GetValidityById)
+		r.Get("/validity/list/{id}", validityHander.GetAllValiditiesByPlatformId)
+
+		r.Get("/packages/{id}", packageHandler.GetPackageValidityByID)
 		r.Get("/packages/list/{id}", packageHandler.ListPackagesByPlatform)
 
 		r.Post("/subscriptions", subscriptionHandler.CreateSubscription)
@@ -85,9 +91,9 @@ func main() {
 		r.Post("/platforms/{id}/activate", platformHandler.ActivatePlatform)
 		r.Post("/platforms/{id}/deactivate", platformHandler.DeactivatePlatform)
 
-		r.Post("/packages", packageHandler.CreatePackage)
-		r.Put("/packages/{id}", packageHandler.UpdatePackage)
-		r.Delete("/packages/{id}", packageHandler.DeletePackage)
+		r.Post("/validity", validityHander.CreateValidity)
+		r.Put("/validity/{id}", validityHander.UpdateValidity)
+		r.Delete("/validity/{id}", validityHander.DeleteValidity)
 
 		r.Post("/payments/{id}/confirm", paymentHandler.ConfirmPayment)
 	})

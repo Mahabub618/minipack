@@ -9,10 +9,10 @@ import (
 )
 
 type ValidityService struct {
-	validityRepository repositories.ValidityRepository
+	validityRepository *repositories.ValidityRepository
 }
 
-func NewValidityService(validityRepository repositories.ValidityRepository) *ValidityService {
+func NewValidityService(validityRepository *repositories.ValidityRepository) *ValidityService {
 	return &ValidityService{validityRepository: validityRepository}
 }
 

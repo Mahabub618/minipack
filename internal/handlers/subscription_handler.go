@@ -125,8 +125,8 @@ func (h *SubscriptionHandler) UpdateSubscription(w http.ResponseWriter, r *http.
 		switch key {
 		case "user_id":
 			existingSub.UserID = value.(int)
-		case "package_id":
-			existingSub.PackageID = value.(int)
+		case "validity_id":
+			existingSub.ValidityID = value.(int)
 		case "start_date":
 			existingSub.StartDate = value.(time.Time)
 		case "end_date":

@@ -5,7 +5,7 @@ import "time"
 type Subscription struct {
 	ID              int       `json:"id"`
 	UserID          int       `json:"user_id" validate:"required"`
-	PackageID       int       `json:"package_id" validate:"required"`
+	ValidityID      int       `json:"validity_id" validate:"required"`
 	Price           float64   `json:"price"`
 	Currency        string    `json:"currency"`
 	Status          string    `json:"status"`

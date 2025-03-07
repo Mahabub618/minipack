@@ -17,7 +17,7 @@ func NewSubscriptionRepository(db *pgxpool.Pool) *SubscriptionRepository {
 // CreateSubscription inserts a new subscription into the database.
 func (r *SubscriptionRepository) CreateSubscription(ctx context.Context, sub *models.Subscription) error {
 	query := `
-		INSERT INTO subscriptions (user_id, package_id, price, currency, status, client_secret, start_date, end_date, auto_renew, trial_end_date, next_billing_date, created_at, updated_at)
+		INSERT INTO subscriptions (user_id, validity_id, price, currency, status, client_secret, start_date, end_date, auto_renew, trial_end_date, next_billing_date, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 		RETURNING id
 	`
@@ -25,7 +25,7 @@ func (r *SubscriptionRepository) CreateSubscription(ctx context.Context, sub *mo
 		ctx,
 		query,
 		sub.UserID,
-		sub.PackageID,
+		sub.ValidityID,
 		sub.Price,
 		sub.Currency,
 		sub.Status,
@@ -43,7 +43,7 @@ func (r *SubscriptionRepository) CreateSubscription(ctx context.Context, sub *mo
 // FindSubscriptionByID retrieves a subscription by its ID.
 func (r *SubscriptionRepository) FindSubscriptionByID(ctx context.Context, id int) (*models.Subscription, error) {
 	query := `
-		SELECT id, user_id, package_id, start_date, end_date, status, auto_renew, trial_end_date, next_billing_date, created_at, updated_at
+		SELECT id, user_id, validity_id, start_date, end_date, status, auto_renew, trial_end_date, next_billing_date, created_at, updated_at
 		FROM subscriptions
 		WHERE id = $1
 	`
@@ -51,7 +51,7 @@ func (r *SubscriptionRepository) FindSubscriptionByID(ctx context.Context, id in
 	err := r.db.QueryRow(ctx, query, id).Scan(
 		&sub.ID,
 		&sub.UserID,
-		&sub.PackageID,
+		&sub.ValidityID,
 		&sub.StartDate,
 		&sub.EndDate,
 		&sub.Status,
@@ -72,14 +72,14 @@ func (r *SubscriptionRepository) UpdateSubscription(ctx context.Context, sub *mo
 	// Start building the query
 	query := `
 		UPDATE subscriptions
-		SET user_id = $1, package_id = $2, start_date = $3, end_date = $4, status = $5, auto_renew = $6, trial_end_date = $7, next_billing_date = $8, updated_at = $9
+		SET user_id = $1, validity_id = $2, start_date = $3, end_date = $4, status = $5, auto_renew = $6, trial_end_date = $7, next_billing_date = $8, updated_at = $9
 		WHERE id = $10
 	`
 	_, err := r.db.Exec(
 		ctx,
 		query,
 		sub.UserID,
-		sub.PackageID,
+		sub.ValidityID,
 		sub.StartDate,
 		sub.EndDate,
 		sub.Status,
@@ -105,7 +105,7 @@ func (r *SubscriptionRepository) DeleteSubscription(ctx context.Context, id int)
 // ListSubscriptionsByUser retrieves all subscriptions for a specific user.
 func (r *SubscriptionRepository) ListSubscriptionsByUser(ctx context.Context, userID int) ([]models.Subscription, error) {
 	query := `
-		SELECT id, user_id, package_id, start_date, end_date, status, auto_renew, trial_end_date, next_billing_date, created_at, updated_at
+		SELECT id, user_id, validity_id, start_date, end_date, status, auto_renew, trial_end_date, next_billing_date, created_at, updated_at
 		FROM subscriptions
 		WHERE user_id = $1
 	`
@@ -121,7 +121,7 @@ func (r *SubscriptionRepository) ListSubscriptionsByUser(ctx context.Context, us
 		if err := rows.Scan(
 			&sub.ID,
 			&sub.UserID,
-			&sub.PackageID,
+			&sub.ValidityID,
 			&sub.StartDate,
 			&sub.EndDate,
 			&sub.Status,

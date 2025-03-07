@@ -18,13 +18,13 @@ var (
 
 type SubscriptionService struct {
 	subscriptionRepo *repositories.SubscriptionRepository
-	packageRepo      *repositories.PackageRepository
+	validityRepo     *repositories.ValidityRepository
 }
 
-func NewSubscriptionService(subscriptionRepo *repositories.SubscriptionRepository, packageRepo *repositories.PackageRepository) *SubscriptionService {
+func NewSubscriptionService(subscriptionRepo *repositories.SubscriptionRepository, validityRepo *repositories.ValidityRepository) *SubscriptionService {
 	return &SubscriptionService{
 		subscriptionRepo: subscriptionRepo,
-		packageRepo:      packageRepo,
+		validityRepo:     validityRepo,
 	}
 }
 
@@ -34,15 +34,15 @@ func (s *SubscriptionService) CreateSubscription(ctx context.Context, sub *model
 	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
 
 	// Fetch package details
-	pkg, err := s.packageRepo.FindPackageByID(ctx, sub.PackageID)
+	pkg, err := s.validityRepo.GetValidityByID(ctx, sub.ValidityID)
 	if err != nil {
-		return errors.New("package not found")
+		return errors.New("validity not found")
 	}
 
 	// Create a PaymentIntent with Stripe
 	params := &stripe.PaymentIntentParams{
 		Amount:   stripe.Int64(int64(pkg.Price * 100)),
-		Currency: stripe.String(pkg.Currency),
+		Currency: stripe.String("USD"),
 	}
 
 	pi, err := paymentintent.New(params)
@@ -56,7 +56,7 @@ func (s *SubscriptionService) CreateSubscription(ctx context.Context, sub *model
 	now := time.Now()
 	sub.CreatedAt, sub.UpdatedAt, sub.StartDate = now, now, now
 	sub.EndDate = now.Add(time.Duration(pkg.Duration) * 24 * time.Hour)
-	sub.Price, sub.Currency = pkg.Price-pkg.DiscountAmount, pkg.Currency
+	sub.Price, sub.Currency = pkg.Price, "USD"
 	sub.Status = "pending"
 	sub.ClientSecret = pi.ClientSecret
 
