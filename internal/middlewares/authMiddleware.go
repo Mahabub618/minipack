@@ -9,7 +9,7 @@ import (
 	"github.com/mahabub618/minipack/internal/handlers"
 )
 
-func AuthMiddleware(requiredRole string) func(http.Handler) http.Handler {
+func AuthMiddleware(allowedRoles ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			tokenString := r.Header.Get("Authorization")
@@ -36,12 +36,14 @@ func AuthMiddleware(requiredRole string) func(http.Handler) http.Handler {
 				return
 			}
 
-			if claims.Role != requiredRole {
-				http.Error(w, "Forbidden", http.StatusForbidden)
-				return
+			for _, role := range allowedRoles {
+				if claims.Role == role {
+					next.ServeHTTP(w, r)
+					return
+				}
 			}
 
-			next.ServeHTTP(w, r)
+			http.Error(w, "Forbidden", http.StatusForbidden)
 		})
 	}
 }
