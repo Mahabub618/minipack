@@ -17,7 +17,7 @@ func NewValidityService(validityRepository *repositories.ValidityRepository) *Va
 }
 
 func (s *ValidityService) CreateValidity(ctx context.Context, validity *models.Validity) error {
-	exists, err := s.validityRepository.ValidityLabelExists(ctx, validity.Label)
+	exists, err := s.validityRepository.ValidityLabelExists(ctx, validity.Label, validity.PlatformID)
 	if err != nil {
 		return err
 	}

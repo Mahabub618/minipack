@@ -36,8 +36,8 @@ func (repo *ValidityRepository) CreateValidityRepository(ctx context.Context, va
 func (repo *ValidityRepository) UpdateValidityRepository(ctx context.Context, validity *models.Validity) error {
 	query := `
 		UPDATE validities
-		SET platform_id=$1, duration=$2, price=$3, label=$4, created_at=$5, updated_at=$6
-		WHERE id = $7`
+		SET platform_id=$1, duration=$2, price=$3, label=$4, updated_at=$5
+		WHERE id = $6`
 
 	_, err := repo.db.Exec(
 		ctx,
@@ -46,8 +46,8 @@ func (repo *ValidityRepository) UpdateValidityRepository(ctx context.Context, va
 		validity.Duration,
 		validity.Price,
 		validity.Label,
-		validity.CreatedAt,
 		validity.UpdatedAt,
+		validity.ID,
 	)
 	return err
 }
@@ -112,10 +112,10 @@ func (repo *ValidityRepository) ListValiditiesByPlatformID(ctx context.Context, 
 	return validities, nil
 }
 
-func (repo *ValidityRepository) ValidityLabelExists(ctx context.Context, label string) (bool, error) {
+func (repo *ValidityRepository) ValidityLabelExists(ctx context.Context, label string, platformId int) (bool, error) {
 	query := `
-		SELECT EXISTS(SELECT id FROM validities WHERE label = $1)`
+		SELECT EXISTS(SELECT id FROM validities WHERE label = $1 AND platform_id = $2)`
 	var exists bool
-	err := repo.db.QueryRow(ctx, query, label).Scan(&exists)
+	err := repo.db.QueryRow(ctx, query, label, platformId).Scan(&exists)
 	return exists, err
 }

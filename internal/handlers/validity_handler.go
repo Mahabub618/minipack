@@ -1,9 +1,12 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
@@ -34,6 +37,16 @@ func (h *ValidityHandler) CreateValidity(w http.ResponseWriter, r *http.Request)
 	validate := validator.New()
 	if err := validate.Struct(validity); err != nil {
 		http.Error(w, "Validation failed: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	platform, err := h.platformServices.GetPlatformByID(r.Context(), validity.PlatformID)
+	if err != nil {
+		http.Error(w, "Failed to get platform", http.StatusInternalServerError)
+		return
+	}
+	if platform == nil {
+		http.Error(w, "Platform not found", http.StatusBadRequest)
 		return
 	}
 
@@ -83,6 +96,7 @@ func (h *ValidityHandler) UpdateValidity(w http.ResponseWriter, r *http.Request)
 			existingValidity.Label = value.(string)
 		}
 	}
+	existingValidity.UpdatedAt = time.Now()
 
 	validate := validator.New()
 	if err := validate.Struct(existingValidity); err != nil {
@@ -109,6 +123,10 @@ func (h *ValidityHandler) GetValidityById(w http.ResponseWriter, r *http.Request
 
 	validity, err := h.validityServices.GetValidityByID(r.Context(), id)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			http.Error(w, "Validity id not found", http.StatusNotFound)
+			return
+		}
 		http.Error(w, "Failed to get validity: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
