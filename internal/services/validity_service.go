@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"errors"
 	"github.com/mahabub618/minipack/internal/models"
 	"github.com/mahabub618/minipack/internal/repositories"
 	"time"
@@ -17,13 +16,6 @@ func NewValidityService(validityRepository *repositories.ValidityRepository) *Va
 }
 
 func (s *ValidityService) CreateValidity(ctx context.Context, validity *models.Validity) error {
-	exists, err := s.validityRepository.ValidityLabelExists(ctx, validity.Label, validity.PlatformID)
-	if err != nil {
-		return err
-	}
-	if exists {
-		return errors.New("validity label already exists")
-	}
 	now := time.Now()
 	validity.CreatedAt, validity.UpdatedAt = now, now
 	return s.validityRepository.CreateValidityRepository(ctx, validity)
