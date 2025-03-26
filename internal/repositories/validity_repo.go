@@ -17,14 +17,16 @@ func NewValidityRepository(db *pgxpool.Pool) *ValidityRepository { return &Valid
 // CreateValidityRepository creates a new validity into the database for a specific platform
 func (repo *ValidityRepository) CreateValidityRepository(ctx context.Context, validity *models.Validity) error {
 	query := `
-		INSERT INTO validities (platform_id, duration, price, label, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO validities (platform_id, name, description, duration, price, label, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING id, created_at, updated_at`
 
 	return repo.db.QueryRow(
 		ctx,
 		query,
 		validity.PlatformID,
+		validity.Name,
+		validity.Description,
 		validity.Duration,
 		validity.Price,
 		validity.Label,
@@ -36,13 +38,15 @@ func (repo *ValidityRepository) CreateValidityRepository(ctx context.Context, va
 func (repo *ValidityRepository) UpdateValidityRepository(ctx context.Context, validity *models.Validity) error {
 	query := `
 		UPDATE validities
-		SET platform_id=$1, duration=$2, price=$3, label=$4, updated_at=$5
-		WHERE id = $6`
+		SET platform_id=$1, name=$2, description=$3, duration=$4, price=$5, label=$6, updated_at=$7
+		WHERE id = $8`
 
 	_, err := repo.db.Exec(
 		ctx,
 		query,
 		validity.PlatformID,
+		validity.Name,
+		validity.Description,
 		validity.Duration,
 		validity.Price,
 		validity.Label,
@@ -60,12 +64,14 @@ func (repo *ValidityRepository) DeleteValidityRepository(ctx context.Context, id
 
 func (repo *ValidityRepository) GetValidityByID(ctx context.Context, id int) (*models.Validity, error) {
 	query := `
-		SELECT platform_id, duration, price, label, created_at, updated_at
+		SELECT platform_id, name, description, duration, price, label, created_at, updated_at
 		FROM validities
 		WHERE id = $1`
 	validity := &models.Validity{}
 	err := repo.db.QueryRow(ctx, query, id).Scan(
 		&validity.PlatformID,
+		&validity.Name,
+		&validity.Description,
 		&validity.Duration,
 		&validity.Price,
 		&validity.Label,
@@ -85,7 +91,7 @@ func (repo *ValidityRepository) GetValidityByID(ctx context.Context, id int) (*m
 // List all ValidityByPlatformID
 func (repo *ValidityRepository) ListValiditiesByPlatformID(ctx context.Context, platformID int) ([]*models.Validity, error) {
 	query := `
-		SELECT id, platform_id, duration, price, label,  created_at, updated_at
+		SELECT id, platform_id, name, description, duration, price, label,  created_at, updated_at
 		FROM validities
 		WHERE platform_id = $1`
 	rows, err := repo.db.Query(ctx, query, platformID)
@@ -99,6 +105,8 @@ func (repo *ValidityRepository) ListValiditiesByPlatformID(ctx context.Context, 
 		if err := rows.Scan(
 			&validity.ID,
 			&validity.PlatformID,
+			&validity.Name,
+			&validity.Description,
 			&validity.Duration,
 			&validity.Price,
 			&validity.Label,

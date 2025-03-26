@@ -88,6 +88,10 @@ func (h *ValidityHandler) UpdateValidity(w http.ResponseWriter, r *http.Request)
 		switch key {
 		case "platform_id":
 			existingValidity.PlatformID = value.(int)
+		case "name":
+			existingValidity.Name = value.(string)
+		case "description":
+			existingValidity.Description = value.(string)
 		case "duration":
 			existingValidity.Duration = value.(int)
 		case "price":
