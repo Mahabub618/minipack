@@ -94,5 +94,5 @@ func (s *PlatformService) DeactivatePlatform(ctx context.Context, id int) error 
 
 // ListPlatforms retrieves a list of platforms
 func (s *PlatformService) ListPlatforms(ctx context.Context) ([]models.Platform, error) {
-	return s.platformRepo.ListPlatforms(ctx)
+	return s.platformRepo.ListPlatformsWithPriceRanges(ctx)
 }
