@@ -9,7 +9,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"github.com/joho/godotenv"
 	"github.com/mahabub618/minipack/config"
 	"github.com/mahabub618/minipack/internal/database"
 	"github.com/mahabub618/minipack/internal/handlers"
@@ -18,10 +17,10 @@ import (
 )
 
 func main() {
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
-	}
+	//err := godotenv.Load(".env")
+	//if err != nil {
+	//	log.Fatalf("Error loading .env file: %v", err)
+	//}
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
