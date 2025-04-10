@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/joho/godotenv"
 	"log"
 	"net/http"
 
@@ -17,10 +18,10 @@ import (
 )
 
 func main() {
-	//err := godotenv.Load(".env")
-	//if err != nil {
-	//	log.Fatalf("Error loading .env file: %v", err)
-	//}
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
 
 	cfg, err := config.LoadConfig()
 	if err != nil {

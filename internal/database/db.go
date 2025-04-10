@@ -12,7 +12,7 @@ import (
 var DB *pgxpool.Pool
 
 func InitDB(cfg *config.Config) error {
-	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName)
+	connStr := fmt.Sprintf("host=%s user=%s password=%s dbname=%s", cfg.DBHost, cfg.DBUser, cfg.DBPassword, cfg.DBName)
 	var err error
 	DB, err = pgxpool.New(context.Background(), connStr)
 	if err != nil {
