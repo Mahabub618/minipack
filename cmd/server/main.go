@@ -56,7 +56,7 @@ func main() {
 	router := chi.NewRouter()
 
 	router.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:4200", "https://afraid-cicely-mahabub618-9a715262.koyeb.app"}, // Allow Angular app
+		AllowedOrigins:   []string{"http://localhost:4200", "http://localhost:4000"}, // Allow Angular app
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
