@@ -56,7 +56,12 @@ func main() {
 	router := chi.NewRouter()
 
 	router.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:4200", "http://localhost:4000"}, // Allow Angular app
+		AllowedOrigins: []string{
+			"http://localhost:4200",
+			"http://localhost:4000",
+			"https://minipack-frontend-mq74qqdwp-mahabub-rahmans-projects.vercel.app",
+			"https://minipack-frontend-git-ssr-mahabub-rahmans-projects.vercel.app",
+		}, // Allow Angular app
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
