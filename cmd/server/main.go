@@ -61,6 +61,7 @@ func main() {
 			"http://localhost:4000",
 			"https://minipack-frontend-mq74qqdwp-mahabub-rahmans-projects.vercel.app",
 			"https://minipack-frontend-git-ssr-mahabub-rahmans-projects.vercel.app",
+			"https://minipack-frontend.vercel.app",
 		}, // Allow Angular app
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
