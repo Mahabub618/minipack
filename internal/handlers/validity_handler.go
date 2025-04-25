@@ -91,15 +91,26 @@ func (h *ValidityHandler) UpdateValidity(w http.ResponseWriter, r *http.Request)
 		case "name":
 			existingValidity.Name = value.(string)
 		case "description":
-			existingValidity.Description = value.(string)
+			if arr, ok := value.([]interface{}); ok {
+				var desc []string
+				for _, val := range arr {
+					if str, ok := val.(string); ok {
+						desc = append(desc, str)
+					}
+				}
+				existingValidity.Description = desc
+			}
 		case "duration":
-			existingValidity.Duration = value.(int)
+			if v, ok := value.(float64); ok {
+				existingValidity.Duration = int(v)
+			}
 		case "price":
 			existingValidity.Price = value.(float64)
 		case "label":
 			existingValidity.Label = value.(string)
 		}
 	}
+	existingValidity.ID = id
 	existingValidity.UpdatedAt = time.Now()
 
 	validate := validator.New()

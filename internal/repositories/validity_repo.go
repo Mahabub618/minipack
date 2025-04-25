@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/lib/pq"
 	"github.com/mahabub618/minipack/internal/models"
 )
 
@@ -26,7 +28,7 @@ func (repo *ValidityRepository) CreateValidityRepository(ctx context.Context, va
 		query,
 		validity.PlatformID,
 		validity.Name,
-		validity.Description,
+		pq.Array(validity.Description),
 		validity.Duration,
 		validity.Price,
 		validity.Label,
@@ -41,7 +43,7 @@ func (repo *ValidityRepository) UpdateValidityRepository(ctx context.Context, va
 		SET platform_id=$1, name=$2, description=$3, duration=$4, price=$5, label=$6, updated_at=$7
 		WHERE id = $8`
 
-	_, err := repo.db.Exec(
+	ok, err := repo.db.Exec(
 		ctx,
 		query,
 		validity.PlatformID,
@@ -53,6 +55,17 @@ func (repo *ValidityRepository) UpdateValidityRepository(ctx context.Context, va
 		validity.UpdatedAt,
 		validity.ID,
 	)
+
+	//fmt.Printf("Validity: %+v\n", validity)
+	//if err != nil {
+	//	log.Println("#255 error in Update", err)
+	//}
+
+	if ok.RowsAffected() == 0 {
+		return fmt.Errorf("no rows were updated")
+	}
+
+	//log.Println("#255 successfully updated rows:", ok.RowsAffected())
 	return err
 }
 
