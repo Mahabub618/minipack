@@ -6,6 +6,7 @@ type Platform struct {
 	ID                 int       `json:"id"`
 	Name               string    `json:"name" validate:"required"`
 	PriceRange         string    `json:"price_range,omitempty"`
+	Type               int       `json:"platform_type"`
 	Description        string    `json:"description"`
 	LogoURL            string    `json:"logo_url"`
 	Status             string    `json:"status"`
