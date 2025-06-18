@@ -20,11 +20,11 @@ func NewPlatformRepository(db *pgxpool.Pool) *PlatformRepository {
 // CreatePlatform creates a new platform into the database
 func (repo *PlatformRepository) CreatePlatform(ctx context.Context, platform *models.Platform) error {
 	query := `
-        INSERT INTO platforms (name, description, logo_url, status, supported_countries, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        INSERT INTO platforms (name, platform_type, description, logo_url, status, supported_countries, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING id`
 
-	row := repo.db.QueryRow(ctx, query, platform.Name, platform.Description, platform.LogoURL, platform.Status, platform.SupportedCountries, platform.CreatedAt, platform.UpdatedAt).Scan(&platform.ID)
+	row := repo.db.QueryRow(ctx, query, platform.Name, platform.Type, platform.Description, platform.LogoURL, platform.Status, platform.SupportedCountries, platform.CreatedAt, platform.UpdatedAt).Scan(&platform.ID)
 
 	return row
 }
@@ -32,7 +32,7 @@ func (repo *PlatformRepository) CreatePlatform(ctx context.Context, platform *mo
 // FindPlatformByID retrieves a platform by its ID.
 func (repo *PlatformRepository) FindPlatformByID(ctx context.Context, id int) (*models.Platform, error) {
 	query := `
-        SELECT id, name, description, logo_url, status, supported_countries, created_at, updated_at
+        SELECT id, name, platform_type, description, logo_url, status, supported_countries, created_at, updated_at
         FROM platforms
         WHERE id = $1
     `
@@ -40,6 +40,7 @@ func (repo *PlatformRepository) FindPlatformByID(ctx context.Context, id int) (*
 	row := repo.db.QueryRow(ctx, query, id).Scan(
 		&platform.ID,
 		&platform.Name,
+		&platform.Type,
 		&platform.Description,
 		&platform.LogoURL,
 		&platform.Status,
@@ -56,10 +57,10 @@ func (repo *PlatformRepository) FindPlatformByID(ctx context.Context, id int) (*
 func (repo *PlatformRepository) UpdatePlatform(ctx context.Context, platform *models.Platform) error {
 	query := `
         UPDATE platforms
-        SET name = $1, description = $2, logo_url = $3, status = $4, supported_countries = $5, updated_at = $6
-        WHERE id = $7`
+        SET name = $1, platform_type = $2, description = $3, logo_url = $4, status = $5, supported_countries = $6, updated_at = $7
+        WHERE id = $8`
 
-	_, err := repo.db.Exec(ctx, query, platform.Name, platform.Description, platform.LogoURL, platform.Status, platform.SupportedCountries, platform.UpdatedAt, platform.ID)
+	_, err := repo.db.Exec(ctx, query, platform.Name, platform.Type, platform.Description, platform.LogoURL, platform.Status, platform.SupportedCountries, platform.UpdatedAt, platform.ID)
 	return err
 }
 
@@ -76,7 +77,7 @@ func (repo *PlatformRepository) DeletePlatform(ctx context.Context, id int) erro
 // ListPlatforms retrieves a list of platforms from the database
 func (r *PlatformRepository) ListPlatforms(ctx context.Context) ([]models.Platform, error) {
 	query := `
-		SELECT id, name, description, logo_url, status, supported_countries, created_at, updated_at
+		SELECT id, name, platform_type, description, logo_url, status, supported_countries, created_at, updated_at
 		FROM platforms
 	`
 	rows, err := r.db.Query(ctx, query)
@@ -91,6 +92,7 @@ func (r *PlatformRepository) ListPlatforms(ctx context.Context) ([]models.Platfo
 		if err := rows.Scan(
 			&platform.ID,
 			&platform.Name,
+			&platform.Type,
 			&platform.Description,
 			&platform.LogoURL,
 			&platform.Status,
@@ -108,7 +110,8 @@ func (r *PlatformRepository) ListPlatformsWithPriceRanges(ctx context.Context) (
 	query := `
         SELECT 
             p.id, 
-            p.name, 
+            p.name,
+            p.platform_type,
             p.description, 
             p.logo_url, 
             p.status, 
@@ -119,7 +122,7 @@ func (r *PlatformRepository) ListPlatformsWithPriceRanges(ctx context.Context) (
             MAX(v.price) as max_price
         FROM platforms p
         LEFT JOIN validities v ON p.id = v.platform_id
-        GROUP BY p.id, p.name, p.description, p.logo_url, p.status, p.supported_countries, p.created_at, p.updated_at
+        GROUP BY p.id, p.name, p.platform_type, p.description, p.logo_url, p.status, p.supported_countries, p.created_at, p.updated_at
     `
 
 	rows, err := r.db.Query(ctx, query)
@@ -136,6 +139,7 @@ func (r *PlatformRepository) ListPlatformsWithPriceRanges(ctx context.Context) (
 		if err := rows.Scan(
 			&platform.ID,
 			&platform.Name,
+			&platform.Type,
 			&platform.Description,
 			&platform.LogoURL,
 			&platform.Status,
@@ -157,6 +161,67 @@ func (r *PlatformRepository) ListPlatformsWithPriceRanges(ctx context.Context) (
 			}
 		}
 
+		platforms = append(platforms, platform)
+	}
+	return platforms, nil
+}
+
+// ListPlatformsByType retrieves platforms by their type
+func (repo *PlatformRepository) ListPlatformsByType(ctx context.Context, platformType int) ([]models.Platform, error) {
+
+	query := `
+		SELECT
+			p.id, 
+            p.name,
+            p.platform_type,
+            p.description, 
+            p.logo_url, 
+            p.status, 
+            p.supported_countries, 
+            p.created_at, 
+            p.updated_at,
+            MIN(v.price) as min_price,
+            MAX(v.price) as max_price
+
+		FROM platforms p
+		LEFT JOIN validities v ON p.id = v.platform_id
+		WHERE p.platform_type = $1
+		GROUP BY p.id, p.name, p.platform_type, p.description, p.logo_url, p.status, p.supported_countries, p.created_at, p.updated_at
+		`
+
+	rows, err := repo.db.Query(ctx, query, platformType)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var platforms []models.Platform
+	for rows.Next() {
+		var platform models.Platform
+		var minPrice, maxPrice sql.NullFloat64
+		if err := rows.Scan(
+			&platform.ID,
+			&platform.Name,
+			&platform.Type,
+			&platform.Description,
+			&platform.LogoURL,
+			&platform.Status,
+			&platform.SupportedCountries,
+			&platform.CreatedAt,
+			&platform.UpdatedAt,
+			&minPrice,
+			&maxPrice); err != nil {
+			return nil, err
+		}
+
+		// Format price range if available
+		if minPrice.Valid && maxPrice.Valid {
+			if minPrice.Float64 == maxPrice.Float64 {
+				platform.PriceRange = fmt.Sprintf("%.2f ৳", minPrice.Float64)
+			} else {
+				platform.PriceRange = fmt.Sprintf("%.2f ৳ - %.2f ৳", minPrice.Float64, maxPrice.Float64)
+			}
+		}
 		platforms = append(platforms, platform)
 	}
 	return platforms, nil
