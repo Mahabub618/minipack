@@ -104,6 +104,8 @@ func (h *PlatformHandler) UpdatePlatform(w http.ResponseWriter, r *http.Request)
 		switch key {
 		case "name":
 			existingPlatform.Name = value.(string)
+		case "platform_type":
+			existingPlatform.Type = int(value.(float64))
 		case "description":
 			existingPlatform.Description = value.(string)
 		case "logo_url":
@@ -158,6 +160,26 @@ func (h *PlatformHandler) DeletePlatform(w http.ResponseWriter, r *http.Request)
 func (h *PlatformHandler) ListPlatforms(w http.ResponseWriter, r *http.Request) {
 	// List platforms
 	platforms, err := h.platformService.ListPlatforms(r.Context())
+	if err != nil {
+		http.Error(w, "Failed to list platforms: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	// Respond with the platforms
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(platforms)
+}
+
+// ListPlatformsOfSpecificType retrieves a list of platform of a specific type
+func (h *PlatformHandler) ListPlatformsOfSpecificType(w http.ResponseWriter, r *http.Request) {
+	platformTypeStr := chi.URLParam(r, "type")
+	platformType, err := strconv.Atoi(platformTypeStr)
+	if err != nil {
+		http.Error(w, "Invalid platform type", http.StatusBadRequest)
+		return
+	}
+	// List platforms of specific type
+	platforms, err := h.platformService.ListPlatformsByType(r.Context(), platformType)
 	if err != nil {
 		http.Error(w, "Failed to list platforms: "+err.Error(), http.StatusInternalServerError)
 		return
