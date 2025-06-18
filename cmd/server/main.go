@@ -80,6 +80,7 @@ func main() {
 	router.Post("/auth/login", userHandler.LoginHandler)
 
 	router.Get("/platforms", platformHandler.ListPlatforms)
+	router.Get("/platforms/type/{type}", platformHandler.ListPlatformsOfSpecificType)
 	router.Get("/platforms/{id}", platformHandler.GetPlatformByID)
 
 	router.Get("/validity/{id}", validityHander.GetValidityById)
