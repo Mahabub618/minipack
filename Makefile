@@ -1,7 +1,8 @@
 # Variables
 APP_NAME := minipack
 PORT := 8585
-
+DB_STRING=postgresql://postgres:admin@localhost:5432/minipack
+MIGRATION_PATH=db/migrations
 # Targets
 .PHONY: all run build test clean lint help
 
@@ -41,3 +42,16 @@ help:
 	@echo "  clean     - Remove build artifacts"
 	@echo "  lint      - Run linting checks (requires golangci-lint)"
 	@echo "  help      - Show this help message"
+
+db-status:
+	@set "GOOSE_DRIVER=postgres" && set "GOOSE_DBSTRING=$(DB_STRING)" && goose -dir=$(MIGRATION_PATH) status
+
+db-up:
+	@set "GOOSE_DRIVER=postgres" && set "GOOSE_DBSTRING=$(DB_STRING)" && goose -dir=$(MIGRATION_PATH) up
+
+db-down:
+	@set "GOOSE_DRIVER=postgres" && set "GOOSE_DBSTRING=$(DB_STRING)" && goose -dir=$(MIGRATION_PATH) down
+
+db-reset:
+	@set "GOOSE_DRIVER=postgres" && set "GOOSE_DBSTRING=$(DB_STRING)" && goose -dir=$(MIGRATION_PATH) reset
+
