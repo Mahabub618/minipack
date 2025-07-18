@@ -38,6 +38,9 @@ func main() {
 	validityRepo := repositories.NewValidityRepository(db)
 	subscriptionRepo := repositories.NewSubscriptionRepository(db)
 	paymentRepo := repositories.NewPaymentRepository(db)
+	orderRepo := repositories.NewOrderRepository(db)
+	cartRepo := repositories.NewCartRepository(db)
+	anonyMousRepo := repositories.NewAnonymousUserRepository(db)
 
 	userService := services.NewUserService(userRepo)
 	platformService := services.NewPlatformService(platformRepo)
@@ -45,6 +48,8 @@ func main() {
 	validityServices := services.NewValidityService(validityRepo)
 	subscriptionService := services.NewSubscriptionService(subscriptionRepo, validityRepo)
 	paymentService := services.NewPaymentService(paymentRepo)
+	orderService := services.NewOrderService(orderRepo, cartRepo)
+	cartService := services.NewCartService(cartRepo, orderRepo)
 
 	userHandler := handlers.NewUserHandler(userService)
 	platformHandler := handlers.NewPlatformHandler(platformService)
@@ -52,6 +57,8 @@ func main() {
 	validityHander := handlers.NewValidityHandler(validityServices, platformService)
 	subscriptionHandler := handlers.NewSubscriptionHandler(subscriptionService, userService)
 	paymentHandler := handlers.NewPaymentHandler(paymentService, subscriptionService)
+	orderHandler := handlers.NewOrderHandler(orderService, cartService, anonyMousRepo)
+	cartHandler := handlers.NewCartHandler(cartService, anonyMousRepo)
 
 	router := chi.NewRouter()
 
@@ -94,6 +101,15 @@ func main() {
 	router.Post("/payments", paymentHandler.CreatePayment)
 	router.Get("/payments/{id}", paymentHandler.GetPaymentByID)
 	router.Get("/payments/subscription/{subscription_id}", paymentHandler.ListPaymentsBySubscription)
+
+	router.Post("/cart/create", cartHandler.CreateCart)
+	router.Post("/cart/items", cartHandler.AddItemToCart)
+	router.Get("/cart/items/{cart_id}", cartHandler.GetCartItems)
+	router.Delete("/cart/{cart_id}", cartHandler.DeleteCart)
+	router.Put("/cart/{cart_id}", cartHandler.UpdateCart)
+
+	router.Post("/order/create", orderHandler.CreateOrder)
+	router.Post("/order/from_cart", orderHandler.CreateOrderFromCart)
 
 	// User Routes
 	//router.Group(func(r chi.Router) {
